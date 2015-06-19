@@ -64,8 +64,12 @@ class Handler implements \Core\Handler {
      * @return string
      */
     function getUserPicture() {
-        // No realiable way to get picture at the moment
+        if(!$this->somtoday->personId){
         return 404;
+        }else {
+            $image = $this->somtoday->request('pasfoto/pasfoto_leerling.jpg?id=' . $this->somtoday->personId);
+            return $image;
+        }
     }
 
     /**
