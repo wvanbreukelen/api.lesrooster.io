@@ -64,8 +64,8 @@ class Handler implements \Core\Handler {
      * @return string
      */
     function getUserPicture() {
-        if(!$this->somtoday->personId){
-        return 404;
+        if(!$this->somtoday->personData){
+            return 403;
         }else {
             $image = $this->somtoday->request('pasfoto/pasfoto_leerling.jpg?id=' . $this->somtoday->personId);
             return $image;
@@ -113,6 +113,7 @@ class Handler implements \Core\Handler {
             foreach($data as $item){
                 $start = ((int)$item->begin) / 1000;
                 $vakname = isset($subjects[$item->vak]) ? $subjects[$item->vak] : $item->titel;
+                $homework = $item->huiswerk;
                 if($item->lesuur && $item->lesuur != '-'){
                     $vakname = $item->lesuur . '. ' .  $vakname;
                 }
@@ -121,6 +122,7 @@ class Handler implements \Core\Handler {
                     'title' => $vakname,
                     'subtitle' => 'Lokaal ' . $item->locatie,
                     'start' => $start,
+                    'homework' => $homework,
                     'start_str' => date('H:i', $start+$tz_offset)
                 );
             }
