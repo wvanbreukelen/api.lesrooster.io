@@ -97,7 +97,7 @@ class Handler implements \Core\Handler {
             return $image;
         }
     }
-
+    
     /**
      * Get weekly shedule for a particular day
      *
@@ -164,32 +164,6 @@ class Handler implements \Core\Handler {
 
         return $result;
     }
-    
-    /**
-     * Get grades
-     *
-     * @return array
-     */
-	function getGrades() {
-	
-	$subjects = (array) json_decode(file_get_contents('lib/Assets/subjects.json'));
-	$data = $this->somtoday->request('Cijfers/GetMultiCijfersRecent/' . $this->somtoday->credentialsSequence() . '/' . $this->somtoday->personId)->data;
-	
-	if(!$this->somtoday->personData){
-		return 403;
-	}
-	    
-		foreach($data as $item){
-	        $vakname = isset($subjects[$item->vak]) ? $subjects[$item->vak] : $item->vak;
-	        $result['items'][] = array(
-	       	    'title' => $vakname,
-	            'subtitle' => 'Weging: ' . $item->weging,
-	            'description' => $item->beschrijving,
-	            'grade' => $item->resultaat
-	        );
-	    }							
-		return $result;
-	}
 	
     private function dutchDayName($time){
         switch(date('N', $time)){
