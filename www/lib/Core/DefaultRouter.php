@@ -16,6 +16,12 @@ if (isset($app) && isset($handler)) {
                 $app->path('user', function () use ($app, $handler) {
                     return $handler->getUserInfo();
                 });
+                
+                 // Path: /:site/:username/:password/grades
+                $app->path('grades', function () use ($app, $handler) {
+                    return $handler->getGrades();
+                });
+
 
                 // Path: /:site/:username/:password/picture
                 $app->path('picture', function () use ($app, $handler) {
