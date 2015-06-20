@@ -58,6 +58,18 @@ class SOMtodayHelper extends HTTPHelper {
         if($this->personData == 'no_org'){
             return $this->personData;
         }
+        
+        if($this->personData == 'FEATURE_NOT_ACTIVATED'){
+		return $this->personData;
+		}
+		
+	    if($this->personData == 'FAILED_AUTHENTICATION'){
+			return $this->personData;
+		}
+		
+		if($this->personData == 'FAILED_OTHER_TYPE'){
+			return $this->personData;
+		}
 
         if (!isset($this->personData->leerlingen[0]) || !isset($this->personData->leerlingen[0]->leerlingId)) {
             return false;

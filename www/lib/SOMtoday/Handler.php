@@ -50,6 +50,24 @@ class Handler implements \Core\Handler {
                 'provider_error' => 'Deze organisatie maakt geen gebruik van de SOMtoday ELO!'
             );
         }
+        
+        if($person == 'FEATURE_NOT_ACTIVATED'){
+	        return array(
+		        'provider_error' => 'Deze organisatie heeft gebruik van de SOMtoday API uitgeschakeld.'
+	        );
+        }
+        
+        if($person == 'FAILED_AUTHENTICATION'){
+	        return array(
+		        'provider_error' => 'Login details onjuist.'
+	        );
+        }
+        
+        if($person == 'FAILED_OTHER_TYPE'){
+	        return array(
+		        'provider_error' => 'Dit account soort is niet ondersteund.'
+	        );
+        }
 
         $info = array(
             'name' => $person->leerlingen[0]->fullName,
