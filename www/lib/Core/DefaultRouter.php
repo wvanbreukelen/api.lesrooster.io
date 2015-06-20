@@ -18,7 +18,7 @@ if (isset($app) && isset($handler)) {
                 });
                 
                  // Path: /:site/:username/:password/grades
-                $app->path('grade', function () use ($app, $handler) {
+                $app->path('grades', function () use ($app, $handler) {
                     return $handler->getGrades();
                 });
 
