@@ -170,33 +170,27 @@ class Handler implements \Core\Handler {
      *
      * @return array
      */
-    function getGrades() {
-        if(!$this->somtoday->personData){
-            return 403;
-        }
-        $subjects = (array) json_decode(file_get_contents('lib/Assets/subjects.json'));
-        $data = $this->somtoday->request('Cijfers/GetMultiCijfersRecent/' . $this->somtoday->credentialsSequence() . '/' . $this->somtoday->personId)->data;
-
-            foreach($data as $item){
-                $vakname = isset($subjects[$item->vak]) ? $subjects[$item->vak] : $item->titel;
-                $result['days'][$curwd]['items'][] = array(
-                    'title' => $vakname,
-                    'subtitle' => 'Weging ' . $item->weging,
-                    'description' => $item->beschrijving,
-                    'grade' => $item->resultaat
-                );
-            }
-        }
-
-        foreach($result['days'] as $index => $day){
-            if(empty($day['items'])){
-                unset($result['days'][$index]);
-            }
-        }
-
-        return $result;
-    }
-
+	function getGrades() {
+	
+	$subjects = (array) json_decode(file_get_contents('lib/Assets/subjects.json'));
+	$data = $this->somtoday->request('Cijfers/GetMultiCijfersRecent/' . $this->somtoday->credentialsSequence() . '/' . $this->somtoday->personId)->data;
+	
+	if(!$this->somtoday->personData){
+		return 403;
+	}
+	    
+		foreach($data as $item){
+	        $vakname = isset($subjects[$item->vak]) ? $subjects[$item->vak] : $item->vak;
+	        $result['items'][] = array(
+	       	    'title' => $vakname,
+	            'subtitle' => 'Weging: ' . $item->weging,
+	            'description' => $item->beschrijving,
+	            'grade' => $item->resultaat
+	        );
+	    }							
+		return $result;
+	}
+	
     private function dutchDayName($time){
         switch(date('N', $time)){
             case 1:
