@@ -22,6 +22,10 @@ if (isset($app) && isset($handler)) {
                     return $handler->getGrades();
                 });
 
+                // Path: /:site/:username/:password/homework
+                $app->path('homework', function () use ($app, $handler) {
+                    return $handler->getHomework();
+                });
 
                 // Path: /:site/:username/:password/picture
                 $app->path('picture', function () use ($app, $handler) {
