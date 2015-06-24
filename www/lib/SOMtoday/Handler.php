@@ -160,9 +160,9 @@ class Handler implements \Core\Handler {
                 $homework = $item->huiswerk;
                 $teacher = $item->titel;
                 $teacher = preg_replace('/^.*-\s*/', '', $teacher);
-                if($item->lesuur && $item->lesuur != '-'){
-                    $vakname = $item->lesuur . '. ' .  $vakname;
-                }
+                //if($item->lesuur && $item->lesuur != '-'){
+                //    $vakname = $item->lesuur . '. ' .  $vakname;
+                //}
 
                 $result['days'][$curwd]['items'][] = array(
 	                'hour' => $item->lesuur,
