@@ -85,13 +85,14 @@ class Handler implements \Core\Handler {
 	
 	$subjects = (array) json_decode(file_get_contents('lib/Assets/subjects.json'));
 	$data = $this->somtoday->request('Cijfers/GetMultiCijfersRecent/' . $this->somtoday->credentialsSequence() . '/' . $this->somtoday->personId)->data;
-	
+
 	if(!$this->somtoday->personData){
 		return 403;
 	}
 	    
 		foreach($data as $item){
 	        $vakname = isset($subjects[$item->vak]) ? $subjects[$item->vak] : $item->vak;
+	        $vakname = ucfirst($vakname);
 	        $result['items'][] = array(
 	        	'title' => $vakname,
 	            'subtitle' => 'Weging: ' . $item->weging,
@@ -158,13 +159,17 @@ class Handler implements \Core\Handler {
                 $start = ((int)$item->begin) / 1000;
                 $vakname = isset($subjects[$item->vak]) ? $subjects[$item->vak] : $item->titel;
                 $homework = $item->huiswerk;
+                $teacher = $item->titel;
+                $teacher = preg_replace('/^.*-\s*/', '', $teacher);
                 if($item->lesuur && $item->lesuur != '-'){
                     $vakname = $item->lesuur . '. ' .  $vakname;
                 }
 
                 $result['days'][$curwd]['items'][] = array(
+	                'hour' => $item->lesuur,
                     'title' => $vakname,
                     'subtitle' => 'Lokaal ' . $item->locatie,
+                    'teacher' => $teacher,
                     'start' => $start,
                     'homework' => $homework,
                     'start_str' => date('H:i', $start+$tz_offset)
