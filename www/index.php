@@ -5,7 +5,7 @@
  */
 
 require __DIR__ . '/vendor/autoload.php';
- 
+
 // Your App
 $app = new Bullet\App();
 $app->path('/magister', function() use ($app) {
@@ -14,6 +14,10 @@ $app->path('/magister', function() use ($app) {
 });
 $app->path('/somtoday', function() use ($app) {
     $handler = new \SOMtoday\Handler();
+    require('lib/Core/DefaultRouter.php');
+});
+$app->path('/zermelo', function() use ($app) {
+    $handler = new \Zermelo\Handler();
     require('lib/Core/DefaultRouter.php');
 });
 
