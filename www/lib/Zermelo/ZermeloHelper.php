@@ -6,8 +6,6 @@
 
 namespace Zermelo;
 
-use Cache;
-
 class ZermeloHelper
 {
 	/**
@@ -17,7 +15,7 @@ class ZermeloHelper
 	protected $school;
 	/**
 	 * Token caching instance to use
-	 * @var object ZermeloAPI\Cache
+	 * @var object Zermelo\Cache
 	 */
 	protected $cache;
 
@@ -26,6 +24,9 @@ class ZermeloHelper
 	 * @var boolean
 	 */
 	private $secure;
+	
+	public $token;
+	
 	/**
 	 * Construct a new Zermelo instance, by any given school
 	 *
@@ -43,7 +44,7 @@ class ZermeloHelper
 	 * @param  integer $weeks The weeks to look forward, standard is one
 	 * @return array          The parsed grid
 	 */
-	public function getStudentGridAhead($id, $weeks = 1)
+	public function getStudentGridAhead($weeks = 1)
 	{
 		// Process weeks settings
 		if ($weeks == 1)
@@ -62,7 +63,7 @@ class ZermeloHelper
 		}
 
 		// Receive and return the student grid
-		return $this->getStudentGrid($id, $start, $end);
+		return $this->getStudentGrid($start, $end);
 	}
 	/**
 	 * Get a student grid
@@ -71,15 +72,15 @@ class ZermeloHelper
 	 * @param  string $end   The stop timestamp of the grid
 	 * @return array         The grid itself or nothing on a fail
 	 */
-	public function getStudentGrid($id, $start = null, $end = null)
+	public function getStudentGrid($start = null, $end = null)
 	{
 		// Set the start times if they are not set
 		if (is_null($start)) $start = strtotime('last monday', strtotime('tomorrow'));
 		if (is_null($end)) $end = strtotime('next saturday', strtotime('tomorrow'));
 		// Load the access token out of the cache
-		$token = $this->getCache()->getToken($id);
+
 		// Call the API
-		$raw = $this->callApi("api/v2/appointments", array('access_token' => $token, 'start' => $start, 'end' => $end, 'user' => '~me'));
+		$raw = $this->callApi("api/v2/appointments", array('access_token' => $this->token, 'start' => $start, 'end' => $end, 'user' => '~me'));
 		// Process the results
 		$json = json_decode($raw, true)['response'];
 		if ($this->validateData($json))
@@ -89,25 +90,7 @@ class ZermeloHelper
 		}
 		return array();
 	}
-	/**
-	 * Get personData
-	 * @param  string $id    The student id
-	 * @return array         The grid itself or nothing on a fail
-	 */
-	public function personData($id)
-	{
-		// Load the access token out of the cache
-		$token = $this->getCache()->getToken($id);
-		// Call the API
-		$raw = $this->callApi("api/v2/users", array('access_token' => $token, 'users' => $id));
-		// Process the results
-		$json = json_decode($raw, true)['response'];
-		if ($this->validateData($json))
-		{
-			return $json;
-		}
-		return array();
-	}
+	
 	/**
 	 * Get all classes of a specific school subject in a grid
 	 * @param  string $grid    The containing grid
@@ -118,6 +101,7 @@ class ZermeloHelper
 	{
 		return $this->getGridPortion($grid, 'subjects', $subject);
 	}
+	
 	/**
 	 * Resolves all classes of a specific teacher in a grid
 	 * @param  string $grid    The containing grid
@@ -128,6 +112,7 @@ class ZermeloHelper
 	{
 		return $this->getGridPortion($grid, 'teachers', $teacher);
 	}
+	
 	/**
 	 * Resolves all cancelled classes in a grid
 	 * @param  string $grid The containing grid
@@ -137,12 +122,13 @@ class ZermeloHelper
 	{
 		return $this->getGridPortion($grid, 'cancelled', 1);
 	}
+	
 	/**
 	 * Get announcements, by looking forward in weeks
 	 * @param  string  $id    The student id
 	 * @param  integer $weeks The weeks to look forward
 	 * @return array         The announcements
-	 */
+	 */ 
 	public function getAnnouncementsAhead($id, $weeks = 1)
 	{
 		if ($weeks == 1)
@@ -155,6 +141,7 @@ class ZermeloHelper
 		}
 		return $this->getAnnouncements($id, $start, $end);
 	}
+	
 	/**
 	 * Get all of the user announcements
 	 * @param  string $id    The student id
@@ -179,29 +166,79 @@ class ZermeloHelper
 		}
 		return null;
 	}
+	
+	public function getPerson(){
+		$raw = $this->callApi('api/v2/users/~me', array('access_token'=> $this->token));
+		$json = json_decode($raw, true)['response'];
+		if ($this->validateData($json)){
+			$data = $json['data'][0];
+			return (object)array(
+				'code' => $data['code'],
+				'firstName' => $data['firstName'],
+				'lastName' => $data['lastName'],
+				'prefix' => $data['prefix'],
+				'status' => $json['status']
+			);
+		}
+		
+		return null;
+	}
+	
 	/**
 	 * Grab a access token from the Zermelo API
-	 * @param  string  $user User to grab a token
-	 * @param  string  $code The code gained by the user itself
-	 * @param  boolean $save Automatically save to access token to a cache file
+	 * @param  string  $username Username
+	 * @param  string  $password User password
+	 * @param  boolean $saveToken Automatically save to access token to a cache file
 	 * @return mixed         The token results
 	 */
-	public function grabAccessToken($user, $code, $saveToken = true)
+	public function grabAccessToken($username, $password, $saveToken = true)
 	{
-		$code = str_replace(' ', '', $code);
+		$tokenId = $this->tokenId($username, $password);
+		$token = $this->getCache()->getToken($tokenId);
+		if($token){
+			$this->token = $token;
+			return $token;
+		}
+		
+		// Get authorization code
+		$raw = $this->callApiPostHeaders("api/v2/oauth", array(
+			'username' => $username, 
+			'password' => $password, 
+			'client_id' => 'OAuthPage', 
+			'redirect_uri' => '/main/----success----', 
+			'scope' => '', // must be empty
+			'state' => '', // must be empty
+			'response_type' => 'code'
+		));
+		if(!preg_match('/----success----\?code=([a-zA-Z0-9-]+)/', $raw, $matches) || count($matches) < 2){
+			return;
+		}
+		$code = str_replace(' ', '', $matches[1]);
+		
+		// Get access token from authoorization code
 		$raw = $this->callApiPost("api/v2/oauth/token", array('grant_type' => 'authorization_code', 'code' => $code));
-		if (strpos($raw, 'Error report') !== false)
-		{
-			throw new Exception("Cannot grab access token, have you double checked the code from the portal?");
-			return null;
+		if (strpos($raw, 'Error report') !== false){
+			return;
 		}
 		$json = json_decode($raw, true);
-		if ($saveToken)
-		{
-			$this->getCache()->saveToken($user, $json['access_token']);
+		
+		// Save to cache
+		if ($saveToken && !empty($json['access_token'])){
+			$this->getCache()->saveToken($tokenId, $json['access_token']);
 		}
-		return $json;
+		
+		// Set on current object
+		$this->token = $json['access_token'];
+		return $this->token;
 	}
+	
+	/**
+     * Get token Id for user
+     */
+	private function tokenId($username, $password){
+		return sha1($this->school . ':' . $username . ':' . $password);
+	}
+	
 	/**
 	 * Invalidate a access token from the Zermelo API
 	 * @param  string $id The student id
@@ -217,6 +254,7 @@ class ZermeloHelper
 		}
 		return false;
 	}
+	
 	/**
 	 * Set the school to use
 	 * @param string $school School to use
@@ -225,6 +263,7 @@ class ZermeloHelper
 	{
 		$this->school = strtolower($school);
 	}
+	
 	/**
 	 * Set the secure state of the application
 	 * @param string $secure The state boolean
@@ -233,6 +272,7 @@ class ZermeloHelper
 	{
 		$this->secure = $secure;
 	}
+	
 	/**
 	 * Validate the grid data received from the Zermelo API
 	 * @param  array $data The grid data to validate
@@ -245,10 +285,10 @@ class ZermeloHelper
 		{
 			if ($httpStatus == '401')
 			{
-				throw new Exception("Cannot get data, access token is invalid!");
+				throw new \Exception("Cannot get data, access token is invalid!");
 				return false;
 			} else {
-				throw new Exception("Data validation error: " . $data['message']);
+				throw new \Exception("Data validation error: " . $data['message']);
 				return false;
 			}
 		}
@@ -331,32 +371,32 @@ class ZermeloHelper
 	}
 	/**
 	 * Set the Zermelo API cache instance of token caching
-	 * @param object $cache ZermeloAPI\Cache
+	 * @param object $cache Zermelo\Cache
 	 */
 	public function setCache($cache)
 	{
-		if (!$cache instanceof ZermeloAPI\Cache)
+		if (!$cache instanceof Cache)
 		{
-			$cache = new ZermeloAPI\Cache;
+			$cache = new Cache;
 		}
 		$this->cache = $cache;
 
 		if (strlen($this->cache->getFileLocation()) < 1 || is_null($this->cache->getFileLocation()))
 		{
-		    throw new Exception("File location is not set! Current file location: " . $this->cache->getFileLocation());
+		    throw new \Exception("File location is not set! Current file location: " . $this->cache->getFileLocation());
 		}
 	}
 	/**
 	 * Get the Zermelo API caching instance
-	 * @return object ZermeloAPI\Cache
+	 * @return object Zermelo\Cache
 	 */
 	public function getCache()
 	{
-		if ($this->cache instanceof ZermeloAPI\Cache)
+		if ($this->cache instanceof Cache)
 		{
 			return $this->cache;
 		}
-		throw new Exception("Cannot get cache instance, cache variable is not an instance of ZermeloAPI\\Cache");
+		throw new \Exception("Cannot get cache instance, cache variable is not an instance of Zermelo\\Cache");
 	}
 	/**
 	 * Cleans out the whole cache, excepts a true boolean for verification
@@ -391,7 +431,7 @@ class ZermeloHelper
 			return json_encode($grid);
 		}
 
-		throw new Exception("Cannot format grid to JSON format. Please give an {array} as a variable type, not a {" . gettype($grid) . "}!");
+		throw new \Exception("Cannot format grid to JSON format. Please give an {array} as a variable type, not a {" . gettype($grid) . "}!");
 	}
 
 	/**
@@ -469,6 +509,39 @@ class ZermeloHelper
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		// Execute the curl request
 		$result = curl_exec($ch);
+		curl_close($ch);
+		return $result;
+	}
+	
+	/**
+	 * Call the API by using the HTTP POST method and return response headers
+	 * @param  string $uri        Uri to interact
+	 * @param  array  $datafields The datafields
+	 * @return string             The raw results from the API
+	 */
+	private function callApiPostHeaders($uri, $datafields = array())
+	{
+		// Get the Zermelo HTTP base url
+		$url = $this->getBaseUrl($uri);
+		// Trim the HTTP data string to convert it to an POST string
+		$data = rtrim(ltrim($this->parseHttpDataString($datafields), '?'), '&');
+		$ch = curl_init();
+		// Set the url
+		curl_setopt($ch, CURLOPT_URL, $url);
+		// Amount of POST parameters to send
+		curl_setopt($ch, CURLOPT_POST, count($datafields));
+		// Set the POST parameters to their assigned values
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+		curl_setopt($ch, CURLOPT_HEADER, true);
+		// Using HTTPS
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $this->secure);
+		// Return the results, essential for the whole application
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		// Execute the curl request
+		$result = curl_exec($ch);
+		$curl_info = curl_getinfo($ch);
+		$headers = substr($result, 0, $curl_info["header_size"]);
 		curl_close($ch);
 		return $result;
 	}

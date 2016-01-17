@@ -3,7 +3,7 @@
  * Copyright 2015 Scholica V.O.F.
  * Created by Matthijs Otterloo
  */
-namespace ZermeloAPI;
+namespace Zermelo;
 use Exception;
 /**
  * This class is for caching API tokens to a JSON file so the user has to get a code out of the portal only one time
@@ -47,7 +47,7 @@ class Cache
 		{
 			return $current['tokens'][$id];
 		}
-		throw new Exception("Cannot get token for " . $id);
+		return false;
 	}
 	public function clearCache($cacheVerfifierBool = false)
 	{
@@ -67,14 +67,14 @@ class Cache
 	{
 		if (!file_exists($location))
 		{
-			if (!$file = @fopen($location))
+			if (!$file = @fopen($location, 'rw'))
 			{
-				throw new Exception("Cache file " . $location . " does not exists! I tried to create it manually, but this failed");
+				throw new \Exception("Cache file " . $location . " does not exists! I tried to create it manually, but this failed");
 			}
 
 			if (!@fwrite($file, "{}"))
 			{
-				throw new Exception("Cache file " . $location . " does not exists! I tried to create it manually, but this failed");
+				throw new \Exception("Cache file " . $location . " does not exists! I tried to create it manually, but this failed");
 			}
 
 			// Successfully created the cache file

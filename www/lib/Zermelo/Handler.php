@@ -33,6 +33,18 @@ class Handler implements \Core\Handler {
         $this->zermelo = new ZermeloHelper($siteID);
         $this->zermelo->grabAccessToken($username, $password);
     }
+    
+    function getSchools(){
+	    $domains = json_decode(file_get_contents('lib/Assets/zportal-domains.json'));
+	    
+	    $portals = array();
+	    foreach($domains as $domain){
+		    $domain = str_replace('.zportal.nl','', $domain);
+		    $portals[] = array('site' => $domain, 'title' => strlen($domain) < 5 ? strtoupper($domain) : ucfirst($domain));
+	    }
+	    
+	    return array('sites' => $portals);
+    }
 
     /**
      * Get user info
@@ -40,7 +52,12 @@ class Handler implements \Core\Handler {
      * @return array
      */
     function getUserInfo() {
-        $person = $this->zermelo->personData;
+	    if(!$this->zermelo->token){
+		    return array(
+		        'provider_error' => 'Login details onjuist.'
+	        );
+	    }
+	    $person = $this->zermelo->getPerson();
         if(!$person){
             return 403;
         }
@@ -57,11 +74,15 @@ class Handler implements \Core\Handler {
         }
 
         $info = array(
-            'name' => $person->firstName . ' ' . $person->prefix . ' ' . $person->lastName,
+            'name' => str_replace('  ', ' ', $person->firstName . ' ' . $person->prefix . ' ' . $person->lastName),
             'username' => $person->code
         );
         return $info;
     }
+
+	function getUserPicture(){
+		return 404;
+	}
 
     /**
      * Get weekly shedule for a particular day
@@ -69,13 +90,12 @@ class Handler implements \Core\Handler {
      * @param $timestamp
      * @return array
      */
-    function getSchedule($start, $end) {
-        if(!$this->zermelo->personData){
+    function getSchedule($timestamp) {
+        if(!$this->zermelo->token){
             return 403;
         }
 
         $subjects = (array) json_decode(file_get_contents('lib/Assets/subjects.json'));
-        $person = $this->zermelo->personData;
 
         $tz = timezone_open('Europe/Amsterdam');
         $tz_offset = timezone_offset_get($tz, new \DateTime('@'.$timestamp, timezone_open('UTC')));
@@ -98,21 +118,26 @@ class Handler implements \Core\Handler {
                 'day_ofweek' => (int)date('w', $curday),
                 'items' => array()
             );
-
-            $time = $curday * 1000;
-
-        $data = $this->zermelo->getStudentGrid($person->code, $start, $end);
+		
+		$start = $curday; 
+		$end = $curday + 86399;
+        $data = $this->zermelo->getStudentGrid($start, $end);
 
             foreach($data as $item){
-                $start = ((int)$item->start) / 1000;
-                $vakname = isset($subjects[$item->subjects[0]]) ? $subjects[$item->subjects[0]] : $item->titel;
+	            $item = (object)$item;
+	            $start = ((int)$item->start);
+                $vakname = isset($subjects[$item->subjects[0]]) ? $subjects[$item->subjects[0]] : $item->subjects[0];
                 $teacher = $item->teachers[0];
                 $teacher = preg_replace('/^.*-\s*/', '', $teacher);
 
-                $result['response'][$curwd]['data'][] = array(
+				if(empty($item->locations)){
+					$item->locations = array('onbekend');
+				}
+
+                $result['days'][$curwd]['items'][] = array(
                     'title' => $vakname,
                     'subtitle' => 'Lokaal ' . $item->locations[0],
-                    'teacher' => $teacher,
+                    'teacher' => strtoupper($teacher),
                     'start' => $start,
                     'start_str' => date('H:i', $start+$tz_offset)
                 );

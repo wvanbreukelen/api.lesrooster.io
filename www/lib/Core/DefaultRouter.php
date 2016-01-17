@@ -6,6 +6,13 @@
 
 if (isset($app) && isset($handler)) {
 
+	// Path: /_schools
+	if(is_callable(array($handler, 'getSchools'))){
+	    $app->path('_schools', function () use ($app, $handler) {
+	        return $handler->getSchools();
+	    });
+    }
+
     $app->param('slug', function ($request, $site) use ($app, $handler) {
         $app->param('ctype_print', function ($request, $username) use ($app, $site, $handler) {
             $app->param('ctype_print', function ($request, $password) use ($app, $site, $username, $handler) {
@@ -18,14 +25,18 @@ if (isset($app) && isset($handler)) {
                 });
                 
                  // Path: /:site/:username/:password/grades
-                $app->path('grades', function () use ($app, $handler) {
-                    return $handler->getGrades();
-                });
+                if(is_callable(array($handler, 'getGrades'))){
+	                $app->path('grades', function () use ($app, $handler) {
+	                    return $handler->getGrades();
+	                });
+                }
 
                 // Path: /:site/:username/:password/homework
-                $app->path('homework', function () use ($app, $handler) {
-                    return $handler->getHomework();
-                });
+                if(is_callable(array($handler, 'getHomework'))){
+	                $app->path('homework', function () use ($app, $handler) {
+	                    return $handler->getHomework();
+	                });
+                }
 
                 // Path: /:site/:username/:password/picture
                 $app->path('picture', function () use ($app, $handler) {

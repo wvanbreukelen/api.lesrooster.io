@@ -34,6 +34,17 @@ class Handler implements \Core\Handler {
         $this->somtoday = new SOMtodayHelper($seg[0], $seg[1]);
         $this->somtoday->getSession($username, $password);
     }
+    
+    function getSchools(){
+	    $domains = json_decode(file_get_contents('https://servers.somtoday.nl/'));
+	    
+	    $portals = array();
+	    foreach($domains[0]->instellingen as $domain){
+		    $portals[] = array('site' => $domain->afkorting . '-' . $domain->brin, 'title' => $domain->naam);
+	    }
+	    
+	    return array('sites' => $portals);
+    }
 
     /**
      * Get user info
