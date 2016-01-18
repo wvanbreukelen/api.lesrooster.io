@@ -236,23 +236,7 @@ class ZermeloHelper
      * Get token Id for user
      */
 	private function tokenId($username, $password){
-		return sha1($this->school . ':' . $username . ':' . $password);
-	}
-	
-	/**
-	 * Invalidate a access token from the Zermelo API
-	 * @param  string $id The student id
-	 * @return bool
-	 */
-	public function invalidateAccessToken($id)
-	{
-		$token = $this->getCache()->getToken($id);
-		$raw = $this->callApiPost("/api/v2/oauth/logout", array('access_token' => $token));
-		if (strlen($raw) === 0)
-		{
-			return true;
-		}
-		return false;
+		return sha1($this->school . ':' . $username . ':' . $password . '_' . floor(time()/9000));
 	}
 	
 	/**
