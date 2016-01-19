@@ -128,6 +128,10 @@ class Handler implements \Core\Handler {
 	            $start = ((int)$item->start);
                 $vakname = isset($subjects[$item->subjects[0]]) ? $subjects[$item->subjects[0]] : $item->subjects[0];
                 $teacher = $item->teachers[0];
+                $cancelled = $item->cancelled[0];
+                $changed = $item->changed[0];
+                $moved   = $item->moved[0];
+                
                 $teacher = preg_replace('/^.*-\s*/', '', $teacher);
 
 				if(empty($item->locations)){
@@ -138,6 +142,9 @@ class Handler implements \Core\Handler {
                     'title' => $vakname,
                     'subtitle' => 'Lokaal ' . $item->locations[0],
                     'teacher' => strtoupper($teacher),
+                    'cancelled' => $cancelled,
+                    'changed' => $changed,
+                    'moved' => $moved,
                     'start' => $start,
                     'start_str' => date('H:i', $start+$tz_offset)
                 );
