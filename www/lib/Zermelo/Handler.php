@@ -129,7 +129,6 @@ class Handler implements \Core\Handler {
                 $vakname = isset($subjects[$item->subjects[0]]) ? $subjects[$item->subjects[0]] : $item->subjects[0];
                 $teacher = $item->teachers;
                 $cancelled = $item->cancelled;
-                $changed = $item->changed;
                 $moved   = $item->moved;
                 
                 $teacher = preg_replace('/^.*-\s*/', '', $teacher);
@@ -143,7 +142,6 @@ class Handler implements \Core\Handler {
                     'subtitle' => 'Lokaal ' . $item->locations[0],
                     'teacher' => strtoupper($teacher),
                     'cancelled' => $cancelled,
-                    'changed' => $changed,
                     'moved' => $moved,
                     'start' => $start,
                     'start_str' => date('H:i', $start+$tz_offset)
