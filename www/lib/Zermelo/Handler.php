@@ -121,16 +121,16 @@ class Handler implements \Core\Handler {
 		
 		$start = $curday; 
 		$end = $curday + 86399;
-        $data = $this->zermelo->getStudentGrid($start, $end);
+        	$data = $this->zermelo->getStudentGrid($start, $end);
 
-            foreach($data as $item){
+            	foreach($data as $item){
 	            $item = (object)$item;
 	            $start = ((int)$item->start);
                 $vakname = isset($subjects[$item->subjects[0]]) ? $subjects[$item->subjects[0]] : $item->subjects[0];
-                $teacher = $item->teachers[0];
-                $cancelled = $item->cancelled[0];
-                $changed = $item->changed[0];
-                $moved   = $item->moved[0];
+                $teacher = $item->teachers;
+                $cancelled = $item->cancelled;
+                $changed = $item->changed;
+                $moved   = $item->moved;
                 
                 $teacher = preg_replace('/^.*-\s*/', '', $teacher);
 
