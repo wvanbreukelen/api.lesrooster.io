@@ -2,6 +2,7 @@
 /*
  * Copyright 2015 Scholica V.O.F.
  * Created by Matthijs Otterloo
+ * Based on wvanbreukelen/ZermeloRoosterPHP
  */
 
 namespace Zermelo;
