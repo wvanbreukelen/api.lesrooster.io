@@ -340,6 +340,7 @@ class ZermeloHelper
 		     $timestamps[$key] = $node['start'];
 		    }
 		   }
+		}
 		array_multisort($timestamps, SORT_ASC, $grid);
 		return $grid;
 	}
