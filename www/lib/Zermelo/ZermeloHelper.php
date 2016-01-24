@@ -28,6 +28,11 @@ class ZermeloHelper
 	
 	public $token;
 	
+	 /**
+ 	 * Allow double hours to be listed in the grid, default is false
+         */
+         const ALLOW_DOUBLE_HOURS = false;
+	
 	/**
 	 * Construct a new Zermelo instance, by any given school
 	 *
@@ -320,7 +325,12 @@ class ZermeloHelper
 		{
 			if (in_array($node['start'], $timestamps))
 			{
-				unset($grid[$key]);
+				if (self::ALLOW_DOUBLE_HOURS == false)
+				{
+					unset($grid[$key]);
+				} else {
+					$timestamps[$key] = $node['start'];
+				}
 			} else {
 				$timestamps[$key] = $node['start'];
 			}
